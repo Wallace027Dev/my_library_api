@@ -1,3 +1,4 @@
+import json
 from app import db
 
 
@@ -6,10 +7,18 @@ class BaseBook:
     title = db.Column(db.String(120), nullable=False)
     author = db.Column(db.String(120), nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
-    category = db.Column(db.String(80), nullable=False)
+    categories = db.Column(db.Text, nullable=False)
     
     def __repr__(self):
         return f"<{self.__class__.__name__} {self.title} by {self.author}>"
+    
+    @property
+    def categories_list(self):
+        return json.loads(self.categories) if self.categories else []
+
+    @categories_list.setter
+    def categories_list(self, value):
+        self.categories = json.dumps(value)
 
 
 class Book(BaseBook, db.Model):

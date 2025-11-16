@@ -12,13 +12,18 @@ books_bp = Blueprint('books', __name__)
 def create_book():
     data = request.get_json()
     
-    # Validação e desserialização dos dados de entrada
+    # Validação dos dados de entrada
     try:
-        book = book_schema.load(data)
+        validated_data = book_schema.load(data)
     except ValidationError as err:
         return jsonify({ "errors": err.messages }), 400
     except Exception as err:
         return jsonify({"error": str(err)}), 400
+    
+    # Cria o objeto Book
+    categories = validated_data.pop('categories')
+    book = Book(**validated_data)
+    book.categories_list = categories
     
     # Adiciona o novo livro ao banco de dados
     try:
@@ -29,4 +34,5 @@ def create_book():
         return jsonify({"error": str(e)}), 500
     
     # Retorna o livro criado com status 201
-    return book_schema.jsonify(book), 201
+    book_schema.context = {'obj': book}
+    return jsonify(book_schema.dump(book)), 201

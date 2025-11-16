@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 
 db = SQLAlchemy()
 ma = Marshmallow()
+mi = Migrate()
 
 def create_app():
     app = Flask(__name__)
@@ -18,13 +19,10 @@ def create_app():
     # Inicializa as extensões
     db.init_app(app)
     ma.init_app(app)
-    Migrate(app, db)
-
-    # Importa modelos para garantir registro com o sqlalchemy
-    from . import models
+    mi.init_app(app, db)
     
-    # (Opcional) registra Blueprints de rotas, exemplo futuro:
-    # from .routes.livros import livros_bp
-    # app.register_blueprint(livros_bp)
+    # Registra Blueprints de rotas, exemplo futuro:
+    from .routes.books import books_bp
+    app.register_blueprint(books_bp, url_prefix='/books')
 
     return app

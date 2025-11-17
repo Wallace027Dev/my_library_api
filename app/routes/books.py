@@ -1,12 +1,14 @@
-from flask import Blueprint, jsonify, request
 from app import db
 from app.models import Book, WishlistItem
 from app.schemas import book_schema, wishlist_item_schema
+
+from flask import Blueprint, jsonify, request
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 
 books_bp = Blueprint('books', __name__)
+
 
 @books_bp.route('/', methods=['POST'])
 def create_book():
@@ -36,3 +38,15 @@ def create_book():
     # Retorna o livro criado com status 201
     book_schema.context = {'obj': book}
     return jsonify(book_schema.dump(book)), 201
+
+
+@books_bp.route('/', methods=['GET'])
+def get_books():
+    try:
+        books = db.session.query(Book).all()
+        
+        for book in books:
+            book_schema.context = {'obj': book}
+        return jsonify(book_schema.dump(books, many=True)), 200
+    except SQLAlchemyError as e:
+        return jsonify({"error": str(e)}), 500

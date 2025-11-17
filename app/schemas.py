@@ -9,9 +9,19 @@ class BookSchema(ma.Schema):
     title = fields.String(required=True)
     author = fields.String(required=True)
     img_url = fields.String(required=True)
-    categories = fields.List(fields.String(validate=validate.OneOf(BookCategory.list())), required=True)
+    categories = fields.List(
+        fields.String(
+            validate=validate.OneOf(
+                BookCategory.list()
+            )),
+        required=True
+    )
     status_read = fields.String(load_default='unread')
-    rating = fields.Integer(required=False, allow_none=True, validate=validate.Range(min=1, max=5))
+    rating = fields.Integer(
+        required=False,
+        allow_none=True,
+        validate=validate.Range(min=1, max=5)
+    )
     
     @post_dump
     def dump_book(self, data, **kwargs):
@@ -23,6 +33,7 @@ class BookSchema(ma.Schema):
 
 
 class WishlistItemSchema(ma.SQLAlchemySchema):
+
     class Meta:
         model = WishlistItem
         load_instance = True

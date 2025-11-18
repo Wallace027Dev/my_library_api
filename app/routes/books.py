@@ -43,10 +43,47 @@ def create_book():
 @books_bp.route('/', methods=['GET'])
 def get_books():
     try:
-        books = db.session.query(Book).all()
+        # Filtros de busca
+        title = request.args.get('title')
+        categories = request.args.get('categories')
+        author = request.args.get('author')
+        status_read = request.args.get('status_read')
         
-        for book in books:
-            book_schema.context = {'obj': book}
+        # Paginação e ordenação
+        page = request.args.get('page', default=1, type=int)
+        per_page = request.args.get('per_page', default=10, type=int)
+        order_by = request.args.get('order_by', default='title', type=str)
+        direction = request.args.get('direction', default='asc', type=str)
+
+        query = db.session.query(Book)
+        if title:
+            query = query.filter(Book.title.ilike(f"%{title}%"))
+        if categories:
+            category_list = [cat.strip() for cat in categories.split(',')]
+            for category in category_list:
+                query = query.filter(Book.categories.ilike(f"%{category}%"))
+        if author:
+            query = query.filter(Book.author.ilike(f"%{author}%"))
+        if status_read:
+            query = query.filter(Book.status_read == status_read)
+        
+        # Ordenação segura
+        if hasattr(Book, order_by):
+            order_col = getattr(Book, order_by)
+        else:
+            order_col = Book.title
+        
+        # Ordenação
+        if direction.lower() == 'desc':
+            query = query.order_by(db.desc(order_col))
+        else:
+            query = query.order_by(order_col)
+        
+        # Paginação
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        books = pagination.items
+
         return jsonify(book_schema.dump(books, many=True)), 200
+
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500

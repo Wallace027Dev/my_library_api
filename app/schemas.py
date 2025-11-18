@@ -1,6 +1,7 @@
 from app import ma
 from app.models import Book, WishlistItem
 from marshmallow import fields, validate, post_load, post_dump
+from marshmallow.fields import Method
 from app.enums import BookCategory
 
 
@@ -9,13 +10,7 @@ class BookSchema(ma.Schema):
     title = fields.String(required=True)
     author = fields.String(required=True)
     img_url = fields.String(required=True)
-    categories = fields.List(
-        fields.String(
-            validate=validate.OneOf(
-                BookCategory.list()
-            )),
-        required=True
-    )
+    categories = Method("get_categories", deserialize="load_categories")
     status_read = fields.String(load_default='unread')
     rating = fields.Integer(
         required=False,
@@ -23,13 +18,18 @@ class BookSchema(ma.Schema):
         validate=validate.Range(min=1, max=5)
     )
     
-    @post_dump
-    def dump_book(self, data, **kwargs):
-        # Sempre sobrescreve categories com a lista do objeto
-        obj = self.context.get('obj')
-        if obj and hasattr(obj, 'categories_list'):
-            data['categories'] = obj.categories_list
-        return data
+    def get_categories(self, obj):
+        """Serializa categories_list para a saída"""
+        return obj.categories_list if hasattr(obj, 'categories_list') else []
+    
+    def load_categories(self, value):
+        """Valida e retorna as categorias na entrada"""
+        if not isinstance(value, list):
+            raise validate.ValidationError("Categories deve ser uma lista")
+        for cat in value:
+            if cat not in BookCategory.list():
+                raise validate.ValidationError(f"Categoria inválida: {cat}")
+        return value
 
 
 class WishlistItemSchema(ma.SQLAlchemySchema):

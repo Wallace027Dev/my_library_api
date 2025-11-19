@@ -26,6 +26,8 @@ def create_book():
     categories = validated_data.pop('categories')
     book = Book(**validated_data)
     book.categories_list = categories
+        
+        
     
     # Adiciona o novo livro ao banco de dados
     try:
@@ -85,5 +87,45 @@ def get_books():
 
         return jsonify(book_schema.dump(books, many=True)), 200
 
+    except SQLAlchemyError as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@books_bp.route('/<int:id>', methods=['PUT'])
+def edit_book(id):
+    try:
+        data = request.get_json()
+        print('Received data for editing book:', data)
+        
+        book = db.session.query(Book).get(id)
+        if not book:
+            return jsonify({"error": "Book not found"}), 404
+        
+        if 'title' in data:
+            book.title = data['title']
+        
+        if 'author' in data:
+            book.author = data['author']
+        
+        if 'img_url' in data:
+            book.img_url = data['img_url']
+        
+        if 'categories' in data:
+            categories = data['categories']
+            if not isinstance(categories, list):
+                return jsonify({"error": "Categories must be a list"}), 400
+            book.categories_list = categories
+        
+        if 'status_read' in data:
+            if data['status_read'] not in ['unread', 'reading', 'read']:
+                return jsonify({"error": "Invalid status_read value"}), 400
+            book.status_read = data['status_read']
+        
+        if 'rating' in data:
+            book.rating = data['rating']
+        
+        db.session.commit()
+        return jsonify(book_schema.dump(book)), 200 
+        
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500

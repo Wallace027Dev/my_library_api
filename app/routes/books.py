@@ -129,3 +129,18 @@ def edit_book(id):
         
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500
+
+
+@books_bp.route('/<int:id>', methods=['DELETE'])
+def delete_book(id):
+    try:
+        book = db.session.query(Book).get(id)
+        if not book:
+            return jsonify({"error": "Book not found"}), 404
+        
+        db.session.delete(book)
+        db.session.commit()
+        return jsonify({"message": "Book deleted successfully"}), 200
+
+    except SQLAlchemyError as e:
+        return jsonify({"error": str(e)}), 500

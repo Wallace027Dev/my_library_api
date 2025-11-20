@@ -39,53 +39,50 @@ def create_wishlist_item():
     return jsonify(wishlist_item_schema.dump(wishlist_item)), 201
 
 
-# @books_bp.route('/', methods=['GET'])
-# def get_books():
-#     try:
-#         # Filtros de busca
-#         title = request.args.get('title')
-#         categories = request.args.get('categories')
-#         author = request.args.get('author')
-#         status_read = request.args.get('status_read')
+@wishlist_bp.route('/', methods=['GET'])
+def get_wishlist_items():
+    try:
+        # Filtros de busca
+        title = request.args.get('title')
+        categories = request.args.get('categories')
+        author = request.args.get('author')
         
-#         # Paginação e ordenação
-#         page = request.args.get('page', default=1, type=int)
-#         per_page = request.args.get('per_page', default=10, type=int)
-#         order_by = request.args.get('order_by', default='title', type=str)
-#         direction = request.args.get('direction', default='asc', type=str)
+        # Paginação e ordenação
+        page = request.args.get('page', default=1, type=int)
+        per_page = request.args.get('per_page', default=10, type=int)
+        order_by = request.args.get('order_by', default='title', type=str)
+        direction = request.args.get('direction', default='asc', type=str)
 
-#         query = db.session.query(Book)
-#         if title:
-#             query = query.filter(Book.title.ilike(f"%{title}%"))
-#         if categories:
-#             category_list = [cat.strip() for cat in categories.split(',')]
-#             for category in category_list:
-#                 query = query.filter(Book.categories.ilike(f"%{category}%"))
-#         if author:
-#             query = query.filter(Book.author.ilike(f"%{author}%"))
-#         if status_read:
-#             query = query.filter(Book.status_read == status_read)
+        query = db.session.query(WishlistItem)
+        if title:
+            query = query.filter(WishlistItem.title.ilike(f"%{title}%"))
+        if categories:
+            category_list = [cat.strip() for cat in categories.split(',')]
+            for category in category_list:
+                query = query.filter(WishlistItem.categories.ilike(f"%{category}%"))
+        if author:
+            query = query.filter(WishlistItem.author.ilike(f"%{author}%"))
         
-#         # Ordenação segura
-#         if hasattr(Book, order_by):
-#             order_col = getattr(Book, order_by)
-#         else:
-#             order_col = Book.title
+        # Ordenação segura
+        if hasattr(WishlistItem, order_by):
+            order_col = getattr(WishlistItem, order_by)
+        else:
+            order_col = WishlistItem.title
         
-#         # Ordenação
-#         if direction.lower() == 'desc':
-#             query = query.order_by(db.desc(order_col))
-#         else:
-#             query = query.order_by(order_col)
+        # Ordenação
+        if direction.lower() == 'desc':
+            query = query.order_by(db.desc(order_col))
+        else:
+            query = query.order_by(order_col)
         
-#         # Paginação
-#         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-#         books = pagination.items
+        # Paginação
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        wishlist_items = pagination.items
 
-#         return jsonify(book_schema.dump(books, many=True)), 200
+        return jsonify(wishlist_item_schema.dump(wishlist_items, many=True)), 200
 
-#     except SQLAlchemyError as e:
-#         return jsonify({"error": str(e)}), 500
+    except SQLAlchemyError as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # @books_bp.route('/<int:id>', methods=['DELETE'])

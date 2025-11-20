@@ -23,6 +23,8 @@ def create_app():
     
     # Registra Blueprints de rotas, exemplo futuro:
     from .routes.books import books_bp
+    from .routes.wishlist import wishlist_bp
     app.register_blueprint(books_bp, url_prefix='/books')
+    app.register_blueprint(wishlist_bp, url_prefix='/wishlist')
 
     return app

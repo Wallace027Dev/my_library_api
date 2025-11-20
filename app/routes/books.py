@@ -53,10 +53,18 @@ def get_books():
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         books = pagination.items
 
-        return jsonify(book_schema.dump(books, many=True)), 200
+        return jsonify({
+            "message": "Books retrieved successfully",
+            "successed": True,
+            "data": book_schema.dump(books, many=True)
+        }), 200
 
     except SQLAlchemyError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "message": str(e),
+            "successed": False,
+            "data": None
+        }), 500
 
 
 @books_bp.route('/<int:id>', methods=['GET'])
@@ -64,12 +72,24 @@ def get_book(id):
     try:
         book = db.session.query(Book).get(id)
         if not book:
-            return jsonify({"error": "Book not found"}), 404
+            return jsonify({
+                "message": "Book not found",
+                "successed": False,
+                "data": None
+            }), 404
         
-        return jsonify(book_schema.dump(book)), 200
+        return jsonify({
+            "message": "Book retrieved successfully",
+            "successed": True,
+            "data": book_schema.dump(book)
+        }), 200
 
     except SQLAlchemyError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "message": str(e),
+            "successed": False,
+            "data": None
+        }), 500
 
 
 @books_bp.route('/', methods=['POST'])
@@ -80,28 +100,44 @@ def create_book():
     try:
         validated_data = book_schema.load(data)
     except ValidationError as err:
-        return jsonify({ "errors": err.messages }), 400
+        return jsonify({ 
+            "message": err.messages,
+            "successed": False,
+            "data": None
+        }), 400
+    
     except Exception as err:
-        return jsonify({"error": str(err)}), 400
+        return jsonify({
+            "message": str(err),
+            "successed": False,
+            "data": None
+        }), 400
     
     # Cria o objeto Book
     categories = validated_data.pop('categories')
     book = Book(**validated_data)
     book.categories_list = categories
-        
-        
     
     # Adiciona o novo livro ao banco de dados
     try:
         db.session.add(book)
         db.session.commit()
+    
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "message": str(e),
+            "successed": False,
+            "data": None
+        }), 500
     
     # Retorna o livro criado com status 201
     book_schema.context = {'obj': book}
-    return jsonify(book_schema.dump(book)), 201
+    return jsonify({
+        "message": "Book created successfully",
+        "successed": True,
+        "data": book_schema.dump(book),
+    }), 201
 
 
 @books_bp.route('/<int:id>', methods=['PUT'])
@@ -112,7 +148,11 @@ def edit_book(id):
         
         book = db.session.query(Book).get(id)
         if not book:
-            return jsonify({"error": "Book not found"}), 404
+            return jsonify({
+                "message": "Book not found",
+                "successed": False,
+                "data": None
+            }), 404
         
         if 'title' in data:
             book.title = data['title']
@@ -138,10 +178,18 @@ def edit_book(id):
             book.rating = data['rating']
         
         db.session.commit()
-        return jsonify(book_schema.dump(book)), 200 
+        return jsonify({
+            "message": "Book updated successfully",
+            "successed": True,
+            "data": book_schema.dump(book)
+        }), 200 
         
     except SQLAlchemyError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "message": str(e),
+            "successed": False,
+            "data": None
+        }), 500
 
 
 @books_bp.route('/<int:id>', methods=['DELETE'])
@@ -149,11 +197,23 @@ def delete_book(id):
     try:
         book = db.session.query(Book).get(id)
         if not book:
-            return jsonify({"error": "Book not found"}), 404
+            return jsonify({
+                "message": "Book not found",
+                "successed": False,
+                "data": None
+            }), 404
         
         db.session.delete(book)
         db.session.commit()
-        return jsonify({"message": "Book deleted successfully"}), 200
+        return jsonify({
+            "message": "Book deleted successfully",
+            "successed": True,
+            "data": book.title
+        }), 200
 
     except SQLAlchemyError as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "message": str(e),
+            "successed": False,
+            "data": None
+        }), 500
